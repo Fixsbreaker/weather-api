@@ -20,7 +20,8 @@ func main() {
 	}
 
 	weatherClient := client.NewWeatherClient(httpClient)
-	weatherService := service.NewWeatherService(weatherClient)
+	geocodingClient := client.NewGeocodingClient(httpClient)
+	weatherService := service.NewWeatherService(weatherClient, geocodingClient)
 	weatherHandler := handler.NewWeatherHandler(weatherService)
 
 	router.Get("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -29,9 +30,14 @@ func main() {
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	// original endpoint
 	router.Route("/api", func(r chi.Router) {
 		r.Get("/weather", weatherHandler.GetWeather)
 	})
+
+	router.Get("/weather/country/{country}/top", weatherHandler.GetTopCitiesByCountry)
+	router.Get("/weather/country/{country}", weatherHandler.GetWeatherByCountry)
+	router.Get("/weather/{city}", weatherHandler.GetWeatherByCity)
 
 	addr := ":8080"
 	log.Printf("server started on %s", addr)
